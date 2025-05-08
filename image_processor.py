@@ -104,6 +104,7 @@ class ImageProcessor:
         self.image_counter = ttk.Label(nav_frame, text="0/0")
         self.image_counter.pack(side=tk.LEFT, padx=10)
         ttk.Button(nav_frame, text="下一张", command=self.next_image).pack(side=tk.LEFT)
+        ttk.Button(nav_frame, text="删除", command=self.delete_image).pack(side=tk.LEFT, padx=(10, 0))
         
         # 图片显示区域
         self.canvas = tk.Canvas(preview_frame, bg="white")
@@ -334,6 +335,42 @@ class ImageProcessor:
     def _update_after_process(self, message):
         self.status_var.set(message)
         self.display_current_image()
+    
+    def delete_image(self):
+        if not self.processed_images:
+            messagebox.showerror("错误", "没有图片可删除")
+            return
+        
+        # 确认是否删除
+        filename = os.path.basename(self.processed_images[self.current_image_index]['path'])
+        confirm = messagebox.askyesno("确认删除", f"确定要删除图片 {filename} 吗？")
+        if not confirm:
+            return
+        
+        # 删除当前图片
+        del self.processed_images[self.current_image_index]
+        
+        # 更新图片索引和显示
+        if not self.processed_images:
+            # 如果删除后没有图片了
+            self.current_image_index = 0
+            self.canvas.delete("all")
+            self.image_counter.config(text="0/0")
+            self.status_var.set("没有图片")
+        else:
+            # 如果删除的是最后一张图片，索引减1
+            if self.current_image_index >= len(self.processed_images):
+                self.current_image_index = len(self.processed_images) - 1
+            
+            # 更新计数器和显示
+            self.update_image_counter()
+            self.display_current_image()
+            
+        # 更新状态栏
+        if self.processed_images:
+            self.status_var.set(f"已删除图片，剩余 {len(self.processed_images)} 张图片")
+        else:
+            self.status_var.set("已删除所有图片")
     
     def save_images(self):
         if not self.processed_images:
